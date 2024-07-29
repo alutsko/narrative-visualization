@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Narrative Visualization</title>
+    <title>Wine Production and Alcohol Consumption in France</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/d3-simple-slider/1.4.0/d3-simple-slider.css">
 </head>
 <body>
+    <div id="buttons">
+        <button id="scene1">Wine Production</button>
+        <button id="scene2">Alcohol Consumption</button>
+        <button id="scene3">Comparison</button>
+        <button id="explore">Explore Data</button>
+    </div>
     <div id="container"></div>
+    <div id="tooltip" class="tooltip"></div>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
