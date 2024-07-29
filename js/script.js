@@ -22,6 +22,7 @@ function initScenes(wineData, alcoholData) {
     d3.select("#container").html("");
 
     // Event listeners for scene buttons
+    d3.select("#intro").on("click", () => createIntroductionScene());
     d3.select("#scene1").on("click", () => createWineProductionScene(wineData));
     d3.select("#scene2").on("click", () => createAlcoholConsumptionScene(alcoholData));
     d3.select("#scene3").on("click", () => createComparisonScene(wineData, alcoholData));
@@ -33,9 +34,32 @@ function initScenes(wineData, alcoholData) {
 
 function createIntroductionScene() {
     const container = d3.select("#container");
-
-    container.html("<h1>Wine Production and Alcohol Consumption in France</h1><p>This narrative visualization explores the relationship between wine production and alcohol consumption in France over the years. Click on the buttons above to navigate through the scenes.</p>");
+    container.html(`
+        <h1>Wine Production and Alcohol Consumption in France</h1>
+        <p>
+            This narrative visualization explores the relationship between wine production and alcohol consumption in France since 1960.
+        </p>
+        <p>
+            Alcohol consumption in France has dimished steadily since 1960, bucking the stereotype of the French person with a cigarette in one hand and a glass of red in the other.
+        </p>
+        <p>
+            Has wine production followed suit due to decreased demand? Or have growers found markets outside of their country to sell their product to?
+        </p>
+        <p>
+            Included are notes about years (so called "extraordinary vintages") respected around the world for being the best in the history of wine production in France.
+        </p>
+        <p>
+            The user is invited to examine whether extraordinary vintages have any effect on production or on French consumers drinking habits.
+        </p>
+        <p>
+            Click on the buttons above to navigate through the scenes.
+        </p>
+        <p>
+            (Please note: data on consumption of alcohol was not recorded regularly until modern times. Spotty data through the end of the 20th century can cause the exploration scene to behave abnormally)
+        </p>
+    `);
 }
+
 
 function createWineProductionScene(data) {
     const container = d3.select("#container").html("");
@@ -69,6 +93,9 @@ function createWineProductionScene(data) {
         .attr("class", "axis axis--y")
         .call(d3.axisLeft(y).ticks(10, "s"));
 
+    const defaultColor = "black";
+    const hoverColor = "#8B0000";
+
     g.selectAll(".bar")
         .data(data)
         .enter().append("rect")
@@ -78,10 +105,11 @@ function createWineProductionScene(data) {
         .attr("width", x.bandwidth())
         .attr("height", d => height - y(d.production))
         .on("mouseover", function(event, d) {
-            d3.select(this).style("fill", "orange");
+            d3.select(this).style("fill", hoverColor);
             showTooltip(event, `Year: ${d.year}<br>Production: ${d.production} tonnes`);
         })
         .on("mouseout", function() {
+            d3.select(this).style("fill", defaultColor);
             hideTooltip();
         });
 
@@ -91,7 +119,7 @@ function createWineProductionScene(data) {
         .attr("y", margin.top / 2)
         .attr("text-anchor", "middle")
         .attr("class", "chart-title")
-        .text("Wine Production in France Over the Years");
+        .text("Wine Production in France Since 1960");
 
     // Add annotations
     addWineProductionAnnotations(g, x, y, data);
@@ -130,6 +158,9 @@ function createAlcoholConsumptionScene(data) {
         .attr("class", "axis axis--y")
         .call(d3.axisLeft(y).ticks(10, "s"));
 
+    const defaultColor = "black";
+    const hoverColor = "#8B0000";
+
     g.selectAll(".bar")
         .data(reversedData)
         .enter().append("rect")
@@ -138,11 +169,13 @@ function createAlcoholConsumptionScene(data) {
         .attr("y", d => y(d.consumption))
         .attr("width", x.bandwidth())
         .attr("height", d => height - y(d.consumption))
+        .attr("fill", defaultColor)
         .on("mouseover", function(event, d) {
-            d3.select(this).style("fill", "orange");
+            d3.select(this).style("fill", hoverColor);
             showTooltip(event, `Year: ${d.year}<br>Consumption: ${d.consumption} litres`);
         })
         .on("mouseout", function() {
+            d3.select(this).style("fill", defaultColor);
             hideTooltip();
         });
 
@@ -152,7 +185,7 @@ function createAlcoholConsumptionScene(data) {
         .attr("y", margin.top / 2)
         .attr("text-anchor", "middle")
         .attr("class", "chart-title")
-        .text("Alcohol Consumption in France Over the Years");
+        .text("Alcohol Consumption in France Since 1960");
 }
 
 function createComparisonScene(wineData, alcoholData) {
@@ -174,7 +207,9 @@ function createComparisonScene(wineData, alcoholData) {
     const g = svg.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    x.domain(d3.extent(wineData, d => d.year));
+    const xExtent = d3.extent([].concat(wineData, alcoholData), d => d.year);
+    x.domain([xExtent[0] - 1, xExtent[1] + 1]);
+    
     y1.domain([0, d3.max(wineData, d => d.production)]);
     y2.domain([0, d3.max(alcoholData, d => d.consumption)]);
 
@@ -217,7 +252,7 @@ function createComparisonScene(wineData, alcoholData) {
     g.append("path")
         .datum(wineData)
         .attr("fill", "none")
-        .attr("stroke", "steelblue")
+        .attr("stroke", "green")
         .attr("stroke-width", 1.5)
         .attr("class", "line")
         .attr("d", line1);
@@ -289,7 +324,9 @@ function createExplorationScene(wineData, alcoholData) {
     const y1 = d3.scaleLinear().rangeRound([height, 0]);
     const y2 = d3.scaleLinear().rangeRound([height, 0]);
 
-    x.domain(d3.extent(wineData, d => d.year));
+    const xExtent = d3.extent([].concat(wineData, alcoholData), d => d.year);
+    x.domain([xExtent[0] - 1, xExtent[1] + 1]);
+    
     y1.domain([0, d3.max(wineData, d => d.production)]);
     y2.domain([0, d3.max(alcoholData, d => d.consumption)]);
 
@@ -357,6 +394,12 @@ function createExplorationScene(wineData, alcoholData) {
         .tickFormat(d3.format("d"))
         .default([d3.min(wineData, d => d.year), d3.max(wineData, d => d.year)])
         .on('onchange', val => {
+            x.domain(val);
+            g.select(".axis--x")
+                .transition()
+                .duration(500)
+                .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
             const filteredWineData = wineData.filter(d => d.year >= val[0] && d.year <= val[1]);
             const filteredAlcoholData = alcoholData.filter(d => d.year >= val[0] && d.year <= val[1]);
 
@@ -369,6 +412,9 @@ function createExplorationScene(wineData, alcoholData) {
                 .transition()
                 .duration(500)
                 .attr("d", line2);
+
+            // Update annotations based on current view
+            updateAnnotations(g, x, y1, filteredWineData);
         });
 
     const sliderGroup = svg.append("g")
@@ -382,6 +428,9 @@ function createExplorationScene(wineData, alcoholData) {
         .attr("text-anchor", "middle")
         .attr("class", "chart-title")
         .text("Exploration of Wine Production and Alcohol Consumption in France");
+    
+    // Add initial annotations
+    updateAnnotations(g, x, y1, wineData);
 }
 
 function showTooltip(event, content) {
@@ -402,9 +451,9 @@ function hideTooltip() {
 function addWineProductionAnnotations(g, x, y, data) {
     const annotations = [
         { year: 1961, label: "1961: Best vintage", position: "center" },
-        { year: 1985, label: "Extraordinary vintage", position: "center" },
-        { year: 1988, label: "Extraordinary vintage", position: "center" },
-        { year: 1995, label: "Extraordinary vintage", position: "center" },
+        { year: 1985, label: "1985: Extraordinary vintage", position: "center" },
+        { year: 1988, label: "1988: Extraordinary vintage", position: "center" },
+        { year: 1995, label: "1995: Extraordinary vintage", position: "center" },
         { year: 1989, label: "1989-1991: Glorious 3 years", position: "center", endYear: 1991 },
         { year: 2018, label: "2018-2020: Glorious 3 years", position: "center", endYear: 2020 }
     ];
@@ -447,9 +496,9 @@ function addAlcoholConsumptionAnnotations(g, x, y, data) {
 function addComparisonAnnotations(g, x, y1, y2, wineData, alcoholData) {
     const annotations = [
         { year: 1961, label: "1961: Best vintage", yPosition: "production" },
-        { year: 1985, label: "Extraordinary vintage", yPosition: "production" },
-        { year: 1988, label: "Extraordinary vintage", yPosition: "production" },
-        { year: 1995, label: "Extraordinary vintage", yPosition: "production" },
+        { year: 1985, label: "1985: Extraordinary vintage", yPosition: "production" },
+        { year: 1988, label: "1988: Extraordinary vintage", yPosition: "production" },
+        { year: 1995, label: "1995: Extraordinary vintage", yPosition: "production" },
         { year: 1989, label: "1989-1991: Glorious 3 years", yPosition: "production", endYear: 1991 },
         { year: 2018, label: "2018-2020: Glorious 3 years", yPosition: "production", endYear: 2020 }
     ];
@@ -475,6 +524,77 @@ function addComparisonAnnotations(g, x, y1, y2, wineData, alcoholData) {
     });
 }
 
+function updateAnnotations(g, x, y1, filteredWineData) {
+    const annotations = [
+        { year: 1961, label: "1961: Best vintage", yPosition: "production" },
+        { year: 1985, label: "1985: Extraordinary vintage", yPosition: "production" },
+        { year: 1988, label: "1988: Extraordinary vintage", yPosition: "production" },
+        { year: 1995, label: "1995: Extraordinary vintage", yPosition: "production" },
+        { year: 1989, label: "1989-1991: Glorious 3 years", yPosition: "production", endYear: 1991 },
+        { year: 2018, label: "2018-2020: Glorious 3 years", yPosition: "production", endYear: 2020 }
+    ];
+
+    g.selectAll(".annotation").remove(); // Remove old annotations
+
+    // Define a fixed position for annotations near the bottom
+    const annotationOffset = 30;
+    const graphHeight = g.node().getBBox().height;
+
+    // Track the annotations already added
+    const addedAnnotations = new Set();
+
+    annotations.forEach(d => {
+        if (d.endYear) {
+            // Range annotations
+            const startYearData = filteredWineData.find(item => item.year === d.year);
+            const endYearData = filteredWineData.find(item => item.year === d.endYear);
+
+            if (startYearData && endYearData) {
+                const xStartPos = x(startYearData.year);
+                const xEndPos = x(endYearData.year);
+                const yPos = graphHeight - annotationOffset;
+
+                if (!addedAnnotations.has(d.label)) {
+                    g.append("text")
+                        .attr("x", (xStartPos + xEndPos) / 2)
+                        .attr("y", yPos)
+                        .attr("dy", ".35em")
+                        .attr("class", "annotation")
+                        .attr("text-anchor", "right")
+                        .attr("transform", `rotate(-90, ${(xStartPos + xEndPos) / 2}, ${yPos})`) // Rotate text 90 degrees
+                        .text(d.label)
+                        .attr("fill", "black")
+                        .attr("font-size", "12px");
+
+                    addedAnnotations.add(d.label);
+                }
+            }
+        } else {
+            // Single-year annotations
+            const yearData = filteredWineData.find(item => item.year === d.year);
+
+            if (yearData) {
+                const xPos = x(yearData.year);
+                const yPos = graphHeight - annotationOffset;
+
+                if (!addedAnnotations.has(d.label)) {
+                    g.append("text")
+                        .attr("x", xPos)
+                        .attr("y", yPos)
+                        .attr("dy", ".35em")
+                        .attr("class", "annotation")
+                        .attr("text-anchor", "right")
+                        .attr("transform", `rotate(-90, ${xPos}, ${yPos})`) // Rotate text 90 degrees
+                        .text(d.label)
+                        .attr("fill", "black")
+                        .attr("font-size", "12px");
+
+                    addedAnnotations.add(d.label);
+                }
+            }
+        }
+    });
+}
 
 function addHoverInteraction(g, x, y1, y2, wineData, alcoholData) {
     // Add hover interaction for exploration
